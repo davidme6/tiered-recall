@@ -72,30 +72,22 @@ def classify_topic(text: str) -> list[str]:
     return topics
 
 
-def summarize_section(lines: list[str], max_length: int = 200) -> str:
-    """生成章节摘要"""
-    content = "\n".join(lines).strip()
-    
-    # 提取关键行（非空、非纯符号）
-    key_lines = []
-    for line in lines:
+def summarize_section(lines: list[str], max_length: int = 50) -> str:
+    """生成章节摘要（精简版，只保留标题和关键信息）"""
+    # 只提取第一个非空行作为摘要
+    for line in lines[:5]:
         line = line.strip()
-        if line and not line.startswith("|") and not line.startswith("---"):
-            key_lines.append(line)
-            if len("\n".join(key_lines)) >= max_length:
-                break
-    
-    summary = "\n".join(key_lines[:5])  # 最多5行
-    return summary[:max_length] + ("..." if len(summary) > max_length else "")
+        if line and not line.startswith("|") and not line.startswith("---") and not line.startswith("```"):
+            return line[:max_length]
+    return ""
 
 
 def build_index(memory_dir: Path, output_dir: Path):
-    """构建记忆索引"""
+    """构建记忆索引（精简版，只保留定位信息）"""
     index = {
-        "version": "1.0.0",
-        "lastUpdated": datetime.now().isoformat(),
+        "v": "1.0.1",  # 版本（缩写）
+        "t": datetime.now().isoformat(),  # 时间（缩写）
         "topics": defaultdict(list),
-        "files": {},
     }
     
     # 扫描所有日志文件
@@ -111,42 +103,28 @@ def build_index(memory_dir: Path, output_dir: Path):
         # 提取章节
         sections = extract_sections(content)
         
-        file_info = {
-            "date": file.stem,
-            "size": len(content),
-            "sections": len(sections),
-            "topics": [],
-        }
-        
         for section in sections:
             # 分类主题
-            topics = classify_topic(section["title"] + " " + " ".join(section["content_lines"][:10]))
+            topics = classify_topic(section["title"] + " " + " ".join(section["content_lines"][:5]))
             
             for topic in topics:
-                if topic not in file_info["topics"]:
-                    file_info["topics"].append(topic)
-                
+                # 精简版：只保留文件名和行号
                 index["topics"][topic].append({
-                    "file": file.name,
-                    "section": section["title"],
-                    "lines": f"{section['start_line']}-{section['end_line']}",
-                    "summary": summarize_section(section["content_lines"]),
+                    "f": file.name,  # 文件名（缩写）
+                    "l": f"{section['start_line']}-{section['end_line']}",  # 行号（缩写）
                 })
-        
-        index["files"][file.name] = file_info
     
     # 转换 defaultdict 为普通 dict
     index["topics"] = dict(index["topics"])
     
-    # 保存索引
+    # 保存索引（紧凑格式）
     output_dir.mkdir(parents=True, exist_ok=True)
     index_file = output_dir / "index.json"
     
     with open(index_file, "w", encoding="utf-8") as f:
-        json.dump(index, f, ensure_ascii=False, indent=2)
+        json.dump(index, f, ensure_ascii=False, separators=(',', ':'))
     
     print(f"✅ 索引已生成: {index_file}")
-    print(f"   - 文件数: {len(index['files'])}")
     print(f"   - 主题数: {len(index['topics'])}")
     
     for topic, entries in index["topics"].items():

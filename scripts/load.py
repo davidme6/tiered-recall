@@ -76,21 +76,26 @@ def load_by_topic(index: dict, topic: str, memory_dir: Path) -> list[dict]:
         return results
     
     for entry in index["topics"][topic]:
-        filepath = memory_dir / entry["file"]
+        # 兼容新旧格式
+        if "f" in entry:
+            filepath = memory_dir / entry["f"]
+            lines_str = entry["l"]
+        else:
+            filepath = memory_dir / entry["file"]
+            lines_str = entry["lines"]
+        
         if not filepath.exists():
             continue
         
         content = filepath.read_text(encoding="utf-8")
         lines = content.split("\n")
         
-        start, end = map(int, entry["lines"].split("-"))
+        start, end = map(int, lines_str.split("-"))
         section_content = "\n".join(lines[start-1:end])
         
         results.append({
-            "file": entry["file"],
-            "section": entry["section"],
+            "file": filepath.name,
             "content": section_content,
-            "summary": entry["summary"],
         })
     
     return results
@@ -108,15 +113,21 @@ def load_by_project(project_name: str, output_dir: Path, memory_dir: Path, index
     for topic, entries in index.get("topics", {}).items():
         if project_name in topic or topic in project_name:
             for entry in entries:
-                filepath = memory_dir / entry["file"]
+                # 兼容新旧格式
+                if "f" in entry:
+                    filepath = memory_dir / entry["f"]
+                    lines_str = entry["l"]
+                else:
+                    filepath = memory_dir / entry["file"]
+                    lines_str = entry["lines"]
+                
                 if filepath.exists():
                     content = filepath.read_text(encoding="utf-8")
                     lines = content.split("\n")
-                    start, end = map(int, entry["lines"].split("-"))
+                    start, end = map(int, lines_str.split("-"))
                     
                     result["entries"].append({
-                        "date": entry["file"].replace(".md", ""),
-                        "section": entry["section"],
+                        "date": filepath.name.replace(".md", ""),
                         "content": "\n".join(lines[start-1:end]),
                     })
     
@@ -271,7 +282,7 @@ def main():
         print(f"\n🔍 加载主题: {args.topic}")
         results = load_by_topic(index, args.topic, memory_dir)
         for r in results:
-            print(f"\n### {r['file']} - {r['section']}")
+            print(f"\n### {r['file']}")
             print(r['content'][:500])
         return
     
