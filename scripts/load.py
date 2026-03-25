@@ -80,9 +80,11 @@ def load_by_topic(index: dict, topic: str, memory_dir: Path) -> list[dict]:
         if "f" in entry:
             filepath = memory_dir / entry["f"]
             lines_str = entry["l"]
+            title = entry.get("t", "")  # 标题（可选）
         else:
             filepath = memory_dir / entry["file"]
             lines_str = entry["lines"]
+            title = entry.get("section", "")
         
         if not filepath.exists():
             continue
@@ -95,6 +97,7 @@ def load_by_topic(index: dict, topic: str, memory_dir: Path) -> list[dict]:
         
         results.append({
             "file": filepath.name,
+            "title": title,
             "content": section_content,
         })
     
@@ -117,9 +120,11 @@ def load_by_project(project_name: str, output_dir: Path, memory_dir: Path, index
                 if "f" in entry:
                     filepath = memory_dir / entry["f"]
                     lines_str = entry["l"]
+                    title = entry.get("t", "")
                 else:
                     filepath = memory_dir / entry["file"]
                     lines_str = entry["lines"]
+                    title = entry.get("section", "")
                 
                 if filepath.exists():
                     content = filepath.read_text(encoding="utf-8")
@@ -128,6 +133,7 @@ def load_by_project(project_name: str, output_dir: Path, memory_dir: Path, index
                     
                     result["entries"].append({
                         "date": filepath.name.replace(".md", ""),
+                        "title": title,
                         "content": "\n".join(lines[start-1:end]),
                     })
     
@@ -282,7 +288,11 @@ def main():
         print(f"\n🔍 加载主题: {args.topic}")
         results = load_by_topic(index, args.topic, memory_dir)
         for r in results:
-            print(f"\n### {r['file']}")
+            title = r.get('title', '')
+            if title:
+                print(f"\n### {r['file']} - {title}")
+            else:
+                print(f"\n### {r['file']}")
             print(r['content'][:500])
         return
     

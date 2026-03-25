@@ -1,13 +1,13 @@
 ---
 name: tiered-recall
-version: 1.0.2
+version: 1.0.3
 description: 分层回忆系统 - 解决上下文长度限制，保持项目延续性。每次新session自动加载核心记忆+最近日志+活跃项目，支持手动深度回忆。
 license: MIT
 author: davidme6
 homepage: https://clawhub.com/skill/tiered-recall
 repository: https://github.com/davidme6/tiered-recall
 keywords: [memory, recall, context, session, continuity]
-changelog: "v1.0.2: 修复load.py兼容性问题。v1.0.1: 精简索引格式，token消耗从50k降至19k（节省62%）。v1.0.0: 初始版本"
+changelog: "v1.0.3: 索引增加标题字段，方便导航且不增加太多token。v1.0.2: 精简索引。v1.0.0: 初始版本"
 ---
 
 # Tiered Recall 🧠📚

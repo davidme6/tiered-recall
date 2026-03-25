@@ -108,10 +108,11 @@ def build_index(memory_dir: Path, output_dir: Path):
             topics = classify_topic(section["title"] + " " + " ".join(section["content_lines"][:5]))
             
             for topic in topics:
-                # 精简版：只保留文件名和行号
+                # 精简版：文件名+行号+标题（不加摘要）
                 index["topics"][topic].append({
-                    "f": file.name,  # 文件名（缩写）
-                    "l": f"{section['start_line']}-{section['end_line']}",  # 行号（缩写）
+                    "f": file.name,  # 文件名
+                    "l": f"{section['start_line']}-{section['end_line']}",  # 行号
+                    "t": section["title"][:50],  # 章节标题（限制50字符）
                 })
     
     # 转换 defaultdict 为普通 dict
